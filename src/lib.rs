@@ -55,37 +55,35 @@ pub trait OpaqueData: fmt::Debug + Send + Sync + 'static {
     fn as_dyn_eq(&self) -> &dyn DynEq;
 }
 
-// UNCOMMENT THIS TO MAKE DOWNCASTING FAIL
-//
-// impl PartialEq for dyn OpaqueData {
-//     fn eq(&self, other: &Self) -> bool {
-//         // Interestingly, we cannot do
-//         //
-//         // self.as_dyn_eq() == other.as_dyn_eq()
-//         //
-//         // because PartialEq is implemented for `dyn DynEq` (which is
-//         // 'static) but `as_dyn_eq` returns a `&dyn DynEq`.
-//         // Therefore rustc rejects this with:
-//         //
-//         //   --> code/opaque/src/lib.rs:32:9
-//         //    |
-//         // 29 |     fn eq(&self, other: &Self) -> bool {
-//         //    |           -----
-//         //    |           |
-//         //    |           `self` declared here, outside of the associated function body
-//         //    |           `self` is a reference that is only valid in the associated function body
-//         //    |           let's call the lifetime of this reference `'1`
-//         // ...
-//         // 32 |         self.as_dyn_eq() == other.as_dyn_eq()
-//         //    |         ^^^^^^^^^^^^^^^^
-//         //    |         |
-//         //    |         `self` escapes the associated function body here
-//         //    |         argument requires that `'1` must outlive `'static`
-//         //
-//         self.as_dyn_eq()
-//             .level_one(other.as_dyn_eq().as_dyn_eq_helper())
-//     }
-// }
+impl PartialEq for dyn OpaqueData {
+    fn eq(&self, other: &Self) -> bool {
+        // Interestingly, we cannot do
+        //
+        // self.as_dyn_eq() == other.as_dyn_eq()
+        //
+        // because PartialEq is implemented for `dyn DynEq` (which is
+        // 'static) but `as_dyn_eq` returns a `&dyn DynEq`.
+        // Therefore rustc rejects this with:
+        //
+        //   --> code/opaque/src/lib.rs:32:9
+        //    |
+        // 29 |     fn eq(&self, other: &Self) -> bool {
+        //    |           -----
+        //    |           |
+        //    |           `self` declared here, outside of the associated function body
+        //    |           `self` is a reference that is only valid in the associated function body
+        //    |           let's call the lifetime of this reference `'1`
+        // ...
+        // 32 |         self.as_dyn_eq() == other.as_dyn_eq()
+        //    |         ^^^^^^^^^^^^^^^^
+        //    |         |
+        //    |         `self` escapes the associated function body here
+        //    |         argument requires that `'1` must outlive `'static`
+        //
+        self.as_dyn_eq()
+            .level_one(other.as_dyn_eq().as_dyn_eq_helper())
+    }
+}
 
 #[cfg(test)]
 mod tests {
